@@ -1,37 +1,85 @@
 package org.gern.marmot.notificationserver
 
-import io.ktor.application.Application
-import io.ktor.application.install
-import io.ktor.features.AutoHeadResponse
-import io.ktor.features.CallLogging
-import io.ktor.features.ContentNegotiation
-import io.ktor.features.DefaultHeaders
-import io.ktor.jackson.jackson
-import io.ktor.locations.Locations
-import io.ktor.routing.Routing
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.jetty.Jetty
-
-fun Application.module() {
-    install(DefaultHeaders)
-    install(CallLogging)
-    install(Locations)
-    install(AutoHeadResponse)
-    install(ContentNegotiation) {
-        jackson()
-    }
-
-    install(Routing) {
-        info()
-    }
-}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.rabbitmq.client.ConnectionFactory
+import okhttp3.OkHttpClient
+import org.gern.marmot.notification.Emailer
+import org.gern.marmot.notification.NotificationDataGateway
+import org.gern.marmot.notification.Notifier
+import org.gern.marmot.rabbitsupport.buildConnectionFactory
+import org.gern.marmot.rabbitsupport.declare
+import org.gern.marmot.rabbitsupport.listen
+import java.net.URI
+import java.net.URL
+import java.util.*
 
 fun main() {
-    val port = System.getenv("PORT")?.toInt() ?: 8080
+    val rabbitUrl = System.getenv("RABBIT_URL")?.let(::URI)
+        ?: throw RuntimeException("Please set the RABBIT_URL environment variable")
+    val sendgridUrl = System.getenv("SENDGRID_URL")?.let(::URL)
+        ?: throw RuntimeException("Please set the SENDGRID_URL environment variable")
+    val sendgridApiKey = System.getenv("SENDGRID_API_KEY")
+        ?: throw RuntimeException("Please set the SENDGRID_API_KEY environment variable")
+    val fromAddress = System.getenv("FROM_ADDRESS")
+        ?: throw RuntimeException("Please set the FROM_ADDRESS environment variable")
 
-    embeddedServer(
-        factory = Jetty,
-        port = port,
-        module = { module() }
-    ).start()
+    start(
+        sendgridUrl = sendgridUrl,
+        sendgridApiKey = sendgridApiKey,
+        fromAddress = fromAddress,
+        rabbitUrl = rabbitUrl,
+        registrationNotificationExchange = "registration-notification-exchange",
+        registrationNotificationQueue = "registration-notification"
+    )
 }
+
+fun start(
+    sendgridUrl: URL,
+    sendgridApiKey: String,
+    fromAddress: String,
+    rabbitUrl: URI,
+    registrationNotificationExchange: String,
+    registrationNotificationQueue: String
+) {
+    val objectMapper = jacksonObjectMapper()
+    val notifier = createNotifier(sendgridUrl, sendgridApiKey, fromAddress)
+
+    val connectionFactory = buildConnectionFactory(rabbitUrl)
+
+    connectionFactory.declare(exchange = registrationNotificationExchange, queue = registrationNotificationQueue)
+    listenForNotificationRequests(connectionFactory, objectMapper, notifier)
+}
+
+private fun createNotifier(
+    sendgridUrl: URL,
+    sendgridApiKey: String,
+    fromAddress: String
+): Notifier {
+    val emailer = Emailer(
+        client = OkHttpClient(),
+        sendgridUrl = sendgridUrl,
+        sendgridApiKey = sendgridApiKey,
+        fromAddress = fromAddress,
+    )
+    val gateway = NotificationDataGateway()
+    return Notifier(gateway, emailer)
+}
+
+private fun listenForNotificationRequests(
+    connectionFactory: ConnectionFactory,
+    objectMapper: ObjectMapper,
+    notifier: Notifier
+) {
+    val channel = connectionFactory.newConnection().createChannel()
+
+    listen(queue = "registration-notification", channel = channel) {
+        val message = objectMapper.readValue(it, NotificationMessage::class.java)
+        notifier.notify(message.email, message.confirmationCode)
+    }
+}
+
+private data class NotificationMessage(
+    val email: String,
+    val confirmationCode: UUID,
+)

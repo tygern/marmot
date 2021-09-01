@@ -1,17 +1,20 @@
 import org.gradle.api.file.DuplicatesStrategy.INCLUDE
 
-val ktorVersion: String by extra
+val rabbitVersion: String by extra
 val logbackVersion: String by extra
+val ktorVersion: String by extra
+val jacksonVersion: String by extra
+val okHttpVersion: String by extra
 
 dependencies {
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-server-jetty:$ktorVersion")
-    implementation("io.ktor:ktor-locations:$ktorVersion")
-    implementation("io.ktor:ktor-jackson:$ktorVersion")
+    implementation(project(":components:notification"))
+    implementation(project(":components:rabbit-support"))
+    implementation("com.rabbitmq:amqp-client:$rabbitVersion")
+
+    implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
-
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
 }
 
 tasks {
