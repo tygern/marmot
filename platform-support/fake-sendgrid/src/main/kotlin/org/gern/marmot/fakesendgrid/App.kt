@@ -33,7 +33,7 @@ fun Application.module(authToken: String) {
             }
 
             val body = call.receive<String>()
-            logger.info("received {}", body)
+            logger.info("email sent {}", body)
 
             call.respond(HttpStatusCode.Created)
         }
@@ -43,6 +43,7 @@ fun Application.module(authToken: String) {
 fun main(): Unit = runBlocking {
     val port = System.getenv("PORT")?.toInt() ?: 9090
 
+    logger.info("waiting for mail")
     embeddedServer(
         factory = Jetty,
         port = port,

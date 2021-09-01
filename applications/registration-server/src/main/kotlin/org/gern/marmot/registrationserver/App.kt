@@ -23,8 +23,13 @@ import org.gern.marmot.rabbitsupport.declare
 import org.gern.marmot.rabbitsupport.listen
 import org.gern.marmot.rabbitsupport.publish
 import org.gern.marmot.registration.registration
+import org.slf4j.LoggerFactory
 import java.net.URI
 import java.util.*
+
+class App
+
+private val logger = LoggerFactory.getLogger(App::class.java)
 
 @KtorExperimentalLocationsAPI
 fun Application.module(connectionFactory: ConnectionFactory) {
@@ -67,8 +72,10 @@ fun main(): Unit = runBlocking {
     )
 
     launch {
+        logger.info("listening for registration requests")
         val channel = connectionFactory.newConnection().createChannel()
         listen(queue = "registration-request", channel = channel) { email ->
+            logger.debug("received registration request for {}", email)
             confirmationService.generateCodeAndPublish(email)
         }
     }

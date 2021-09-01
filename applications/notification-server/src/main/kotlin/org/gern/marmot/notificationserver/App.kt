@@ -10,9 +10,14 @@ import org.gern.marmot.notification.Notifier
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
 import org.gern.marmot.rabbitsupport.declare
 import org.gern.marmot.rabbitsupport.listen
+import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.URL
 import java.util.*
+
+class App
+
+private val logger = LoggerFactory.getLogger(App::class.java)
 
 fun main() {
     val rabbitUrl = System.getenv("RABBIT_URL")?.let(::URI)
@@ -48,6 +53,8 @@ fun start(
     val connectionFactory = buildConnectionFactory(rabbitUrl)
 
     connectionFactory.declare(exchange = registrationNotificationExchange, queue = registrationNotificationQueue)
+
+    logger.info("listening for registration notifications")
     listenForNotificationRequests(connectionFactory, objectMapper, notifier)
 }
 
@@ -75,6 +82,7 @@ private fun listenForNotificationRequests(
 
     listen(queue = "registration-notification", channel = channel) {
         val message = objectMapper.readValue(it, NotificationMessage::class.java)
+        logger.debug("received registration notification {}", message)
         notifier.notify(message.email, message.confirmationCode)
     }
 }
