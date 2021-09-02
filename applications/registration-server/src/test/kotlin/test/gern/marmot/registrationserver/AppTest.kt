@@ -1,11 +1,13 @@
 package test.gern.marmot.registrationserver
 
 import io.ktor.http.HttpMethod
+import io.ktor.locations.KtorExperimentalLocationsAPI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import io.ktor.server.testing.handleRequest
 import kotlin.test.assertNotNull
 
+@KtorExperimentalLocationsAPI
 class AppTest {
     @Test
     fun testInfo() = testApp {

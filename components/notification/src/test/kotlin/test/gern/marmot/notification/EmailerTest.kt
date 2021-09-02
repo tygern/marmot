@@ -2,7 +2,7 @@ package test.gern.marmot.notification
 
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import org.gern.marmot.fakesendgrid.module
+import org.gern.marmot.fakesendgridendpoints.fakeSendgridRoutes
 import org.gern.marmot.notification.Emailer
 import org.junit.After
 import org.junit.Before
@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 class EmailerTest {
     private val server = MockServer(
         port = 9021,
-        module = { module("super-secret") },
+        module = { fakeSendgridRoutes("super-secret") },
     )
 
     @Before
@@ -53,6 +53,6 @@ class EmailerTest {
                 }]
             }""".trimIndent()
 
-        assertJsonEquals(expectedResponse, server.lastCall())
+        assertJsonEquals(expectedResponse, server.lastCallBody())
     }
 }

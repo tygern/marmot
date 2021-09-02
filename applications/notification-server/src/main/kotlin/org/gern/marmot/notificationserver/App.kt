@@ -28,12 +28,13 @@ fun main() {
         ?: throw RuntimeException("Please set the SENDGRID_API_KEY environment variable")
     val fromAddress = System.getenv("FROM_ADDRESS")
         ?: throw RuntimeException("Please set the FROM_ADDRESS environment variable")
+    val connectionFactory = buildConnectionFactory(rabbitUrl)
 
     start(
         sendgridUrl = sendgridUrl,
         sendgridApiKey = sendgridApiKey,
         fromAddress = fromAddress,
-        rabbitUrl = rabbitUrl,
+        connectionFactory = connectionFactory,
         registrationNotificationExchange = "registration-notification-exchange",
         registrationNotificationQueue = "registration-notification"
     )
@@ -43,19 +44,16 @@ fun start(
     sendgridUrl: URL,
     sendgridApiKey: String,
     fromAddress: String,
-    rabbitUrl: URI,
+    connectionFactory: ConnectionFactory,
     registrationNotificationExchange: String,
     registrationNotificationQueue: String
 ) {
     val objectMapper = jacksonObjectMapper()
     val notifier = createNotifier(sendgridUrl, sendgridApiKey, fromAddress)
-
-    val connectionFactory = buildConnectionFactory(rabbitUrl)
-
     connectionFactory.declare(exchange = registrationNotificationExchange, queue = registrationNotificationQueue)
 
     logger.info("listening for registration notifications")
-    listenForNotificationRequests(connectionFactory, objectMapper, notifier)
+    listenForNotificationRequests(connectionFactory, objectMapper, notifier, registrationNotificationQueue)
 }
 
 private fun createNotifier(
@@ -76,11 +74,12 @@ private fun createNotifier(
 private fun listenForNotificationRequests(
     connectionFactory: ConnectionFactory,
     objectMapper: ObjectMapper,
-    notifier: Notifier
+    notifier: Notifier,
+    registrationNotificationQueue: String
 ) {
     val channel = connectionFactory.newConnection().createChannel()
 
-    listen(queue = "registration-notification", channel = channel) {
+    listen(queue = registrationNotificationQueue, channel = channel) {
         val message = objectMapper.readValue(it, NotificationMessage::class.java)
         logger.debug("received registration notification {}", message)
         notifier.notify(message.email, message.confirmationCode)

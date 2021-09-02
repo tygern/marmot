@@ -4,6 +4,8 @@ val ktorVersion: String by extra
 val logbackVersion: String by extra
 
 dependencies {
+    implementation(project(":components:fake-sendgrid-endpoints"))
+
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-jetty:$ktorVersion")
 

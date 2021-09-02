@@ -15,6 +15,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
+
+    testImplementation(project(":components:test-support"))
+    testImplementation(project(":components:fake-sendgrid-endpoints"))
 }
 
 tasks {

@@ -5,5 +5,5 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
 
     testImplementation(project(":components:test-support"))
-    testImplementation(project(":platform-support:fake-sendgrid"))
+    testImplementation(project(":components:fake-sendgrid-endpoints"))
 }

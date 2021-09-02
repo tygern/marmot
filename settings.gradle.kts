@@ -6,6 +6,7 @@ include(
     "components:notification",
     "components:registration",
 
+    "components:fake-sendgrid-endpoints",
     "components:rabbit-support",
     "components:test-support",
 
