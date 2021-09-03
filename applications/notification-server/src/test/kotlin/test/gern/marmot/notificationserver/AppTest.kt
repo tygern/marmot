@@ -1,9 +1,7 @@
 package test.gern.marmot.notificationserver
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.runBlockingTest
 import org.gern.marmot.fakesendgridendpoints.fakeSendgridRoutes
 import org.gern.marmot.notificationserver.start
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
@@ -22,19 +20,19 @@ class AppTest {
     private val sendgridUrl = URL("http://localhost:9021")
     private val rabbitUri = URI("amqp://localhost:5672")
 
-    private val server = MockServer(
+    private val sendgridServer = MockServer(
         port = 9021,
         module = { fakeSendgridRoutes("super-secret") },
     )
 
     @Before
     fun setUp() {
-        server.start()
+        sendgridServer.start()
     }
 
     @After
     fun tearDown() {
-        server.stop()
+        sendgridServer.stop()
     }
 
     @Test
@@ -65,7 +63,7 @@ class AppTest {
                 }]
             }"""
 
-        val receivedCall = server.waitForCall(Duration.seconds(2))
+        val receivedCall = sendgridServer.waitForCall(Duration.seconds(2))
 
         assertJsonEquals(expectedCall, receivedCall)
     }

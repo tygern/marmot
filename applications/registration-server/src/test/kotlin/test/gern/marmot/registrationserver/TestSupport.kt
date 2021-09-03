@@ -11,7 +11,8 @@ import java.net.URI
 @KtorExperimentalLocationsAPI
 fun testApp(callback: TestApplicationEngine.() -> Unit) {
     val connectionFactory = buildConnectionFactory(URI("amqp://localhost:5672"))
-    withTestApplication({ module(connectionFactory) }) { callback() }
+
+    withTestApplication({ module(connectionFactory, "test-request-exchange") }) { callback() }
 }
 
 val objectMapper = jacksonObjectMapper()

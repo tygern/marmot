@@ -2,6 +2,7 @@ import org.gradle.api.file.DuplicatesStrategy.INCLUDE
 
 val ktorVersion: String by extra
 val logbackVersion: String by extra
+val okHttpVersion: String by extra
 val rabbitVersion: String by extra
 
 dependencies {
@@ -17,7 +18,9 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.rabbitmq:amqp-client:$rabbitVersion")
 
+    testImplementation(project(":components:test-support"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
+    testImplementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
 }
 
 tasks {

@@ -37,8 +37,8 @@ class TestPublishAction {
     fun testPublish() = runBlocking {
         val publishAction = publish(factory, testExchange)
 
-        publishAction("some message")
+        publishAction("""{"some": "message"}""")
 
-        factory.assertMessageReceived(testQueue, "some message")
+        factory.assertMessageReceived(testQueue, """{"some": "message"}""")
     }
 }

@@ -14,10 +14,12 @@ import io.ktor.locations.Locations
 import io.ktor.routing.Routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.jetty.Jetty
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.gern.marmot.confirmation.ConfirmationDataGateway
 import org.gern.marmot.confirmation.ConfirmationService
+import org.gern.marmot.confirmation.UuidProvider
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
 import org.gern.marmot.rabbitsupport.declare
 import org.gern.marmot.rabbitsupport.listen
@@ -32,7 +34,10 @@ class App
 private val logger = LoggerFactory.getLogger(App::class.java)
 
 @KtorExperimentalLocationsAPI
-fun Application.module(connectionFactory: ConnectionFactory) {
+fun Application.module(
+    connectionFactory: ConnectionFactory,
+    registrationRequestExchange: String,
+) {
     install(DefaultHeaders)
     install(CallLogging)
     install(Locations)
@@ -41,8 +46,6 @@ fun Application.module(connectionFactory: ConnectionFactory) {
         jackson()
     }
 
-    val registrationRequestExchange = "registration-request-exchange"
-    connectionFactory.declare(exchange = registrationRequestExchange, queue = "registration-request")
     val publishRequest = publish(connectionFactory, registrationRequestExchange)
 
     install(Routing) {
@@ -60,29 +63,49 @@ fun main(): Unit = runBlocking {
     val connectionFactory = buildConnectionFactory(rabbitUrl)
 
     val registrationNotificationExchange = "registration-notification-exchange"
-    connectionFactory.declare(exchange = registrationNotificationExchange, queue = "registration-notification")
+    val registrationNotificationQueue = "registration-notification"
+    val registrationRequestExchange = "registration-request-exchange"
+    val registrationRequestQueue = "registration-request"
 
+    connectionFactory.declare(exchange = registrationNotificationExchange, queue = registrationNotificationQueue)
+    connectionFactory.declare(exchange = registrationRequestExchange, queue = registrationRequestQueue)
+
+    listenForRegistrationRequests(connectionFactory, registrationNotificationExchange, registrationRequestQueue)
+    registrationServer(port, connectionFactory, registrationRequestExchange).start()
+}
+
+@KtorExperimentalLocationsAPI
+fun registrationServer(
+    port: Int,
+    connectionFactory: ConnectionFactory,
+    registrationRequestExchange: String,
+) = embeddedServer(
+    factory = Jetty,
+    port = port,
+    module = { module(connectionFactory, registrationRequestExchange) }
+)
+
+fun CoroutineScope.listenForRegistrationRequests(
+    connectionFactory: ConnectionFactory,
+    registrationNotificationExchange: String,
+    registrationRequestQueue: String,
+    uuidProvider: UuidProvider = { -> UUID.randomUUID() },
+) {
     val publishNotification = publish(connectionFactory, registrationNotificationExchange)
 
     val confirmationService = ConfirmationService(
         gateway = ConfirmationDataGateway(),
         publishNotification = publishNotification,
-        uuidProvider = { -> UUID.randomUUID()},
+        uuidProvider = uuidProvider,
         mapper = jacksonObjectMapper(),
     )
 
     launch {
         logger.info("listening for registration requests")
         val channel = connectionFactory.newConnection().createChannel()
-        listen(queue = "registration-request", channel = channel) { email ->
+        listen(queue = registrationRequestQueue, channel = channel) { email ->
             logger.debug("received registration request for {}", email)
             confirmationService.generateCodeAndPublish(email)
         }
     }
-
-    embeddedServer(
-        factory = Jetty,
-        port = port,
-        module = { module(connectionFactory) }
-    ).start()
 }
