@@ -3,10 +3,7 @@ package test.gern.marmot.rabbitsupport
 import com.rabbitmq.client.ConnectionFactory
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
-import org.gern.marmot.rabbitsupport.buildConnectionFactory
-import org.gern.marmot.rabbitsupport.declare
-import org.gern.marmot.rabbitsupport.publish
-import org.gern.marmot.rabbitsupport.useChannel
+import org.gern.marmot.rabbitsupport.*
 import org.junit.After
 import org.junit.Before
 import test.gern.marmot.testsupport.assertMessageReceived
@@ -16,8 +13,8 @@ import kotlin.test.assertEquals
 import kotlin.time.Duration
 
 class TestPublishAction {
-    private val testQueue = "test-queue"
-    private val testExchange = "test-exchange"
+    private val testQueue = RabbitQueue("test-queue")
+    private val testExchange = RabbitExchange("test-exchange")
     private val factory = buildConnectionFactory(URI("amqp://localhost:5672"))
 
     @Before
@@ -28,8 +25,8 @@ class TestPublishAction {
     @After
     fun tearDown() {
         factory.useChannel { channel ->
-            channel.queueDelete(testQueue)
-            channel.exchangeDelete(testExchange)
+            channel.queueDelete(testQueue.name)
+            channel.exchangeDelete(testExchange.name)
         }
     }
 

@@ -4,6 +4,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import org.gern.marmot.fakesendgridendpoints.fakeSendgridRoutes
 import org.gern.marmot.notificationserver.start
+import org.gern.marmot.rabbitsupport.RabbitExchange
+import org.gern.marmot.rabbitsupport.RabbitQueue
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
 import org.gern.marmot.rabbitsupport.publish
 import org.junit.After
@@ -38,7 +40,7 @@ class AppTest {
     @Test
     fun testApp() = runBlocking {
         val connectionFactory = buildConnectionFactory(rabbitUri)
-        val exchange = "notification-test-exchange"
+        val exchange = RabbitExchange("notification-test-exchange")
         val notificationPublisher = publish(connectionFactory, exchange)
 
         start(
@@ -47,7 +49,7 @@ class AppTest {
             fromAddress = "from@example.com",
             connectionFactory = connectionFactory,
             registrationNotificationExchange = exchange,
-            registrationNotificationQueue = "notification-test-queue",
+            registrationNotificationQueue = RabbitQueue("notification-test-queue"),
         )
 
         notificationPublisher("""{"email": "to@example.com", "confirmationCode": "33333333-e89b-12d3-a456-426614174000"}""")

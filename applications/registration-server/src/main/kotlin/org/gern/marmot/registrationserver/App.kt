@@ -20,10 +20,7 @@ import kotlinx.coroutines.runBlocking
 import org.gern.marmot.confirmation.ConfirmationDataGateway
 import org.gern.marmot.confirmation.ConfirmationService
 import org.gern.marmot.confirmation.UuidProvider
-import org.gern.marmot.rabbitsupport.buildConnectionFactory
-import org.gern.marmot.rabbitsupport.declare
-import org.gern.marmot.rabbitsupport.listen
-import org.gern.marmot.rabbitsupport.publish
+import org.gern.marmot.rabbitsupport.*
 import org.gern.marmot.registration.registration
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -36,7 +33,7 @@ private val logger = LoggerFactory.getLogger(App::class.java)
 @KtorExperimentalLocationsAPI
 fun Application.module(
     connectionFactory: ConnectionFactory,
-    registrationRequestExchange: String,
+    registrationRequestExchange: RabbitExchange,
 ) {
     install(DefaultHeaders)
     install(CallLogging)
@@ -62,10 +59,10 @@ fun main(): Unit = runBlocking {
 
     val connectionFactory = buildConnectionFactory(rabbitUrl)
 
-    val registrationNotificationExchange = "registration-notification-exchange"
-    val registrationNotificationQueue = "registration-notification"
-    val registrationRequestExchange = "registration-request-exchange"
-    val registrationRequestQueue = "registration-request"
+    val registrationNotificationExchange = RabbitExchange("registration-notification-exchange")
+    val registrationNotificationQueue = RabbitQueue("registration-notification")
+    val registrationRequestExchange = RabbitExchange("registration-request-exchange")
+    val registrationRequestQueue = RabbitQueue("registration-request")
 
     connectionFactory.declare(exchange = registrationNotificationExchange, queue = registrationNotificationQueue)
     connectionFactory.declare(exchange = registrationRequestExchange, queue = registrationRequestQueue)
@@ -78,7 +75,7 @@ fun main(): Unit = runBlocking {
 fun registrationServer(
     port: Int,
     connectionFactory: ConnectionFactory,
-    registrationRequestExchange: String,
+    registrationRequestExchange: RabbitExchange,
 ) = embeddedServer(
     factory = Jetty,
     port = port,
@@ -87,8 +84,8 @@ fun registrationServer(
 
 fun CoroutineScope.listenForRegistrationRequests(
     connectionFactory: ConnectionFactory,
-    registrationNotificationExchange: String,
-    registrationRequestQueue: String,
+    registrationNotificationExchange: RabbitExchange,
+    registrationRequestQueue: RabbitQueue,
     uuidProvider: UuidProvider = { -> UUID.randomUUID() },
 ) {
     val publishNotification = publish(connectionFactory, registrationNotificationExchange)

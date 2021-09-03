@@ -7,9 +7,7 @@ import okhttp3.OkHttpClient
 import org.gern.marmot.notification.Emailer
 import org.gern.marmot.notification.NotificationDataGateway
 import org.gern.marmot.notification.Notifier
-import org.gern.marmot.rabbitsupport.buildConnectionFactory
-import org.gern.marmot.rabbitsupport.declare
-import org.gern.marmot.rabbitsupport.listen
+import org.gern.marmot.rabbitsupport.*
 import org.slf4j.LoggerFactory
 import java.net.URI
 import java.net.URL
@@ -35,8 +33,8 @@ fun main() {
         sendgridApiKey = sendgridApiKey,
         fromAddress = fromAddress,
         connectionFactory = connectionFactory,
-        registrationNotificationExchange = "registration-notification-exchange",
-        registrationNotificationQueue = "registration-notification"
+        registrationNotificationExchange = RabbitExchange("registration-notification-exchange"),
+        registrationNotificationQueue = RabbitQueue("registration-notification")
     )
 }
 
@@ -45,8 +43,8 @@ fun start(
     sendgridApiKey: String,
     fromAddress: String,
     connectionFactory: ConnectionFactory,
-    registrationNotificationExchange: String,
-    registrationNotificationQueue: String
+    registrationNotificationExchange: RabbitExchange,
+    registrationNotificationQueue: RabbitQueue
 ) {
     val objectMapper = jacksonObjectMapper()
     val notifier = createNotifier(sendgridUrl, sendgridApiKey, fromAddress)
@@ -75,7 +73,7 @@ private fun listenForNotificationRequests(
     connectionFactory: ConnectionFactory,
     objectMapper: ObjectMapper,
     notifier: Notifier,
-    registrationNotificationQueue: String
+    registrationNotificationQueue: RabbitQueue
 ) {
     val channel = connectionFactory.newConnection().createChannel()
 

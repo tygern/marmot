@@ -2,11 +2,12 @@ package test.gern.marmot.registrationserver
 
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import kotlinx.coroutines.runBlocking
-import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.gern.marmot.rabbitsupport.RabbitExchange
+import org.gern.marmot.rabbitsupport.RabbitQueue
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
 import org.gern.marmot.rabbitsupport.declare
 import org.gern.marmot.registrationserver.listenForRegistrationRequests
@@ -23,10 +24,10 @@ import kotlin.time.Duration
 @KtorExperimentalLocationsAPI
 class RegistrationTest {
     private val connectionFactory = buildConnectionFactory(URI("amqp://localhost:5672"))
-    private val notificationExchange = "test-notification-exchange"
-    private val notificationQueue = "test-notification-queue"
-    private val requestExchange = "test-request-exchange"
-    private val requestQueue = "test-request-queue"
+    private val notificationExchange = RabbitExchange("test-notification-exchange")
+    private val notificationQueue = RabbitQueue("test-notification-queue")
+    private val requestExchange = RabbitExchange("test-request-exchange")
+    private val requestQueue = RabbitQueue("test-request-queue")
 
     private val regServer = registrationServer(
         port = 9120,

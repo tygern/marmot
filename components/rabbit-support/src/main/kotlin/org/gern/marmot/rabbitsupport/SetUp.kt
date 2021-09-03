@@ -9,11 +9,11 @@ fun buildConnectionFactory(rabbitUrl: URI): ConnectionFactory =
         setUri(rabbitUrl)
     }
 
-fun ConnectionFactory.declare(exchange: String, queue: String): Unit =
+fun ConnectionFactory.declare(exchange: RabbitExchange, queue: RabbitQueue): Unit =
     useChannel {
-        it.exchangeDeclare(exchange, "direct", false, false, null)
-        it.queueDeclare(queue, false, false, false, null)
-        it.queueBind(queue, exchange, "")
+        it.exchangeDeclare(exchange.name, "direct", false, false, null)
+        it.queueDeclare(queue.name, false, false, false, null)
+        it.queueBind(queue.name, exchange.name, "")
     }
 
 fun <T> ConnectionFactory.useChannel(block: (Channel) -> T): T =

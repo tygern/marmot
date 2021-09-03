@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.server.testing.TestApplicationEngine
 import io.ktor.server.testing.withTestApplication
+import org.gern.marmot.rabbitsupport.RabbitExchange
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
 import org.gern.marmot.registrationserver.module
 import java.net.URI
@@ -12,7 +13,7 @@ import java.net.URI
 fun testApp(callback: TestApplicationEngine.() -> Unit) {
     val connectionFactory = buildConnectionFactory(URI("amqp://localhost:5672"))
 
-    withTestApplication({ module(connectionFactory, "test-request-exchange") }) { callback() }
+    withTestApplication({ module(connectionFactory, RabbitExchange("test-request-exchange")) }) { callback() }
 }
 
 val objectMapper = jacksonObjectMapper()
