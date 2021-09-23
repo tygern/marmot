@@ -6,6 +6,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.gern.marmot.confirmation.ConfirmationDataGateway
 import org.gern.marmot.rabbitsupport.RabbitExchange
 import org.gern.marmot.rabbitsupport.RabbitQueue
 import org.gern.marmot.rabbitsupport.buildConnectionFactory
@@ -29,10 +30,13 @@ class RegistrationTest {
     private val requestExchange = RabbitExchange("test-request-exchange")
     private val requestQueue = RabbitQueue("test-request-queue")
 
+    private val confirmationDataGateway = ConfirmationDataGateway()
+
     private val regServer = registrationServer(
         port = 9120,
         connectionFactory = connectionFactory,
         registrationRequestExchange = requestExchange,
+        confirmationDataGateway = confirmationDataGateway,
     )
 
     private val client = OkHttpClient()
@@ -52,6 +56,7 @@ class RegistrationTest {
     @Test
     fun testRegistration():Unit = runBlocking {
         listenForRegistrationRequests(
+            confirmationDataGateway = confirmationDataGateway,
             connectionFactory = connectionFactory,
             registrationNotificationExchange = notificationExchange,
             registrationRequestQueue = requestQueue,

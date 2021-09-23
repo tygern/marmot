@@ -1,40 +1,23 @@
 package test.gern.marmot.confirmation
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.gern.marmot.confirmation.ConfirmationDataGateway
 import org.gern.marmot.confirmation.ConfirmationService
-import test.gern.marmot.testsupport.assertJsonEquals
 import java.util.*
 import kotlin.test.Test
-import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class ConfirmationServiceTest {
     @Test
-    fun testGenerateCodeAndPublish() {
-        val uuid = UUID.fromString("123e4567-e89b-12d3-a456-426614174000")
-        var publishedMessage: String? = null
-
+    fun testConfirm() {
         val gateway = ConfirmationDataGateway()
-        val publish = { message: String -> publishedMessage = message }
-        val uuidProvider = {  -> uuid }
+        val service = ConfirmationService(gateway)
 
-        val expectedMessage = """
-            {
-              "email":"test@example.com",
-              "confirmationCode":"123e4567-e89b-12d3-a456-426614174000"
-            }
-            """.trimIndent()
+        val uuid = UUID.fromString("55555555-1d21-442e-8fc0-a2259ec09190")
+        gateway.save("there@example.com", uuid)
 
-        val service = ConfirmationService(
-            gateway,
-            publish,
-            uuidProvider,
-            jacksonObjectMapper()
-        )
-
-        service.generateCodeAndPublish("test@example.com")
-
-        assertEquals(uuid, gateway.get("test@example.com"))
-        assertJsonEquals(expectedMessage, publishedMessage)
+        assertTrue(service.confirm("there@example.com", uuid))
+        assertFalse(service.confirm("not-there@example.com", uuid))
+        assertFalse(service.confirm("there@example.com", UUID.fromString("eeeeeeee-1d21-442e-8fc0-a2259ec09190")))
     }
 }

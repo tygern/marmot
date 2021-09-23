@@ -7,3 +7,14 @@ Accept: application/json
 }
 
 ###
+
+POST http://localhost:8081/confirmation
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "test@example.com",
+  "confirmationCode": "5d7ddf1f-2fb1-43a9-b5fd-dce60734e776"
+}
+
+###
