@@ -13,7 +13,7 @@ subprojects kotlinConfig@{
         set("okHttpVersion", "4.9.1")
     }
 
-    group = "org.gern.marmot"
+    group = "io.initialcapacity.emailverifier"
 
     apply(plugin = "kotlin")
 

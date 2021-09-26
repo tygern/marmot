@@ -1,3 +1,3 @@
-# Marmot
+# Email Verifier
 
-![Marmot](./readme-images/marmot.jpg)
+![Email Verifier](./readme-images/marmot.jpg)

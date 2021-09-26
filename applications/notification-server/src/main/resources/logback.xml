@@ -5,7 +5,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.gern.marmot" level="DEBUG"/>
+    <logger name="io.initialcapacity.emailverifier" level="DEBUG"/>
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>

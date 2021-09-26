@@ -26,7 +26,7 @@ dependencies {
 tasks {
     jar {
         manifest {
-            attributes("Main-Class" to "org.gern.marmot.registrationserver.AppKt")
+            attributes("Main-Class" to "io.initialcapacity.emailverifier.registrationserver.AppKt")
         }
 
         duplicatesStrategy = INCLUDE

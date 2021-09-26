@@ -15,7 +15,7 @@ dependencies {
 tasks {
     jar {
         manifest {
-            attributes("Main-Class" to "org.gern.marmot.fakesendgrid.AppKt")
+            attributes("Main-Class" to "io.initialcapacity.emailverifier.fakesendgrid.AppKt")
         }
 
         duplicatesStrategy = INCLUDE
